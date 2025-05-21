@@ -1,0 +1,53 @@
+services:
+  tachograph_control_unit:
+    build: ./ControlUnit
+    image: tachograph_control_unit
+    environment:
+      - PYTHONBUFFERED=1
+      - PORT=8008
+    volumes: 
+      - ./ControlUnit/code:/etc/usr/src/code
+  
+  tachograph_card_reader:
+    build: ./CardReader
+    image: tachograph_card_reader
+    environment:
+      - PYTHONBUFFERED=1
+      - UC_SIMULATOR_HOST=tachograph_control_unit
+      - UC_SIMULATOR_PORT=8008
+    volumes: 
+      - ./CardReader/code:/etc/usr/src/code
+  tachograph_odometer:
+    build: ./Odometer
+    image: tachograph_odometer
+    environment:
+      - PYTHONBUFFERED=1
+      - UC_SIMULATOR_HOST=tachograph_control_unit
+      - UC_SIMULATOR_PORT=8008
+      - PORT=8006
+    volumes:
+      - ./Odometer/code:/etc/usr/src/code
+
+  tachograph_positioning_system:
+    build: ./PositioningSystem
+    image: tachograph_positioning_system
+    environment:
+      - PYTHONBUFFERED=1
+      - UC_SIMULATOR_HOST=tachograph_control_unit
+      - UC_SIMULATOR_PORT=8008
+      - PORT=8005
+    volumes:
+      - ./PositioningSystem/code:/etc/usr/src/code
+
+  tachograph_routes_generator:
+    build: ./RoutesGenerator
+    image: tachograph_routes_generator
+    environment:
+      - PYTHONBUFFERED=1
+      - GPS_SIMULATOR_HOST=tachograph_positioning_system
+      - GPS_SIMULATOR_PORT=8005
+      - SPEED_SIMULATOR_HOST=tachograph_odometer
+      - SPEED_SIMULATOR_PORT=8006
+      - GOOGLE_MAPS_API_KEY=AIzaSyB_lBqaAXWOaK2D6LFMXYszC_Jfq26u8d8
+    volumes:
+      - ./RoutesGenerator/code:/etc/usr/src/code
