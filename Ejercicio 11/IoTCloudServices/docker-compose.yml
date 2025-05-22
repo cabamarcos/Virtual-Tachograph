@@ -1,0 +1,145 @@
+services:
+  mosquitto:
+    build: ./mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - "./mosquitto/code/mosquitto.conf:/etc/mosquitto/mosquitto.conf"
+
+  dbservice:
+    build: ./dbservice
+    environment:
+      - MYSQL_ROOT_PASSWORD=3uaUmakeJr
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mariadb", "-uroot", "-p3uaUmakeJr", "-e", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+      
+  message_router:
+    build: ./message_router
+    environment:
+      - MQTT_SERVER_ADDRESS=mosquitto
+      - MQTT_SERVER_PORT=1883
+      - HOST=0.0.0.0
+      - PORT=5000
+      - DEVICES_MICROSERVICE_ADDRESS=devices_microservice
+      - DEVICES_MICROSERVICE_PORT=5001
+      - SESSIONS_MICROSERVICE_ADDRESS=sessions_microservice
+      - SESSIONS_MICROSERVICE_PORT=5002
+      - TELEMETRY_MICROSERVICE_ADDRESS=telemetry_microservice
+      - TELEMETRY_MICROSERVICE_PORT=5003
+      - EVENTS_MICROSERVICE_ADDRESS=events_microservice
+      - EVENTS_MICROSERVICE_PORT=5004
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "5000:5000"
+    volumes:
+      - "./message_router/code:/etc/usr/src/app"
+    depends_on:
+      - mosquitto
+
+  devices_microservice:
+    build: ./microservices/devices_microservice
+    ports:
+      - '5001:5001'
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5001
+      - DBHOST=dbservice
+      - DBUSER=fic_db_user
+      - DBPASSWORD=secret1234
+      - DBDATABASE=fic_data
+      - MESSAGE_ROUTER_ADDRESS=message_router
+      - MESSAGE_ROUTER_PORT=5000
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - "./microservices/devices_microservice/code:/etc/usr/src/app"
+    depends_on:
+      dbservice:
+        condition: service_healthy
+
+  sessions_microservice:
+    build: ./microservices/sessions_microservice
+    ports:
+      - '5002:5002'
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5002
+      - DBHOST=dbservice
+      - DBUSER=fic_db_user
+      - DBPASSWORD=secret1234
+      - DBDATABASE=fic_data
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - "./microservices/sessions_microservice/code:/etc/usr/src/app"
+    depends_on:
+      dbservice:
+        condition: service_healthy
+
+  telemetry_microservice:
+    build: ./microservices/telemetry_microservice
+    ports:
+      - '5003:5003'
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5003
+      - DBHOST=dbservice
+      - DBUSER=fic_db_user
+      - DBPASSWORD=secret1234
+      - DBDATABASE=fic_data
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - "./microservices/telemetry_microservice/code:/etc/usr/src/app"
+    depends_on:
+      dbservice:
+        condition: service_healthy
+
+  events_microservice:
+    build: ./microservices/events_microservice
+    ports:
+      - '5004:5004'
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5004
+      - DBHOST=dbservice
+      - DBUSER=fic_db_user
+      - DBPASSWORD=secret1234
+      - DBDATABASE=fic_data
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - "./microservices/events_microservice/code:/etc/usr/src/app"
+    depends_on:
+      dbservice:
+        condition: service_healthy
+  
+  webapp_backend:
+    build: ./webapp-backend
+    ports:
+      - "5005:5005"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5005
+      - TELEMETRY_MICROSERVICE_ADDRESS=telemetry_microservice
+      - TELEMETRY_MICROSERVICE_PORT=5003
+      - EVENTS_MICROSERVICE_ADDRESS=events_microservice
+      - EVENTS_MICROSERVICE_PORT=5004
+      - DEVICES_MICROSERVICE_ADDRESS=devices_microservice
+      - DEVICES_MICROSERVICE_PORT=5001
+    volumes:
+      - "./webapp-backend/code:/etc/usr/src/app"
+    depends_on:
+      - telemetry_microservice
+      - events_microservice
+      - devices_microservice
+
+
+  webapp_frontend:
+    build: ./webapp-frontend
+    ports:
+      - "80:80"
+
+

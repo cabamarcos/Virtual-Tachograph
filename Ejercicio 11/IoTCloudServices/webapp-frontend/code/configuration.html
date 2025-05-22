@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Configuración del Tacógrafo</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="./style.css" />
+  <script type="module" src="./configuration.js"></script>
+</head>
+<body>
+  <div id="configuration_viewer">
+    <label>Configuración actual del vehículo:</label>
+  </div>
+  <div id="configuration_assigner">
+    <label for="samplingFrequencyInputText">Nueva Frecuencia de Muestreo:</label><br>
+    <input type="text" id="samplingFrequencyInputText" value="2"><br>
+    <label for="sendingFrequencyInputText">Nueva Frecuencia de Envío:</label><br>
+    <input type="text" id="sendingFrequencyInputText" value="2"><br><br>
+    <button type="button" onclick="update_configuration()">Enviar</button>
+    <input type="button" onclick="location.href='./index.html';" value="Volver" />
+  </div>
+</body>
+</html>
