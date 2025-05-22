@@ -1,0 +1,3 @@
+mariadb: docker exec -it iotcloudservices-dbservice-1 mariadb -u root -p3uaUmakeJr
+
+stop mqtt: sudo systemctl stop mosquitto
